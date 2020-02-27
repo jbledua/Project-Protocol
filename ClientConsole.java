@@ -33,6 +33,9 @@ public class ClientConsole implements ChatIF
    * The instance of the client that created this ConsoleChat.
    */
   ChatClient client;
+  String host;
+  int port;
+
 
   
   //Constructors ****************************************************
@@ -43,26 +46,21 @@ public class ClientConsole implements ChatIF
    * @param host The host to connect to.
    * @param port The port to connect on.
    */
-  public ClientConsole(String host, int port) 
+  public ClientConsole(String _host, int _port) 
   {
+    this.host = _host;
+    this.port = _port;
+
     try 
     {
 
-      client = new ChatClient(host, port, this);
+      this.client = new ChatClient(host, port, this);
     } 
     catch(IOException exception) 
     {
-      System.out.println("Error: Can't setup connection!"
-                + " Terminating client.");
-      System.exit(1);
+      System.out.println("Error: Can't create connection!");
     }
   }
-
-  public void connect()
-  {
-
-  }
-
   
   //Instance methods ************************************************
   
@@ -71,8 +69,51 @@ public class ClientConsole implements ChatIF
    * received, it sends it to the client's message handler.
    */
 
+  public Boolean logon()
+  {
+    Boolean success = false;
 
-  public void accept() 
+    try 
+    {
+      this.client.connect();
+      success = true;
+    } 
+    catch(IOException exception) 
+    {
+      System.out.println("Error: Can't setup connection!");
+    }
+
+    return success;
+  }
+
+  public void logoff()
+  {
+    System.out.println("Command Recived: Log Off");
+    try 
+    {
+      this.client.disconnect();
+    } 
+    catch(IOException exception) 
+    {
+      System.out.println("Error: Can't close connection!");
+      
+      System.exit(0);
+    }
+
+    return;
+  }
+
+
+  public void stop()
+  {
+    System.out.println("Command Recived: Quit");
+    client.quit();
+
+    return;
+  }
+
+
+  public void start() 
   {
     try
     {
@@ -80,26 +121,33 @@ public class ClientConsole implements ChatIF
       String message;
 
       Boolean running = true;
-      Boolean loggedIn = false;
+      //Boolean loggedIn = false;
 
       while (running) 
       {
+        //
         message = fromConsole.readLine();
 
+        // Check for command character
         int index = message.indexOf('#');
-        if (index == 0) {
+
+        // Is Msg command?
+        if (index > -1) {
+
+          // Yes: Remove '#'
           String command = message.substring(index + 1, message.length());
+
+          // Which Command?
           switch (command.toLowerCase()) 
           {
-            case "#logon":
-              loggedIn = true;
+            case "logon":
+              this.logon();
               break;
-            case "#logoff":
-              loggedIn = false;
+            case "logoff":
+              this.logoff();
               break;
             case "quit":
-              client.quit();
-              loggedIn = false;
+              this.stop();  
               running = false;
               break;
             default:
@@ -109,25 +157,25 @@ public class ClientConsole implements ChatIF
         }
         else
         {
-          if(loggedIn)
+          // No: Is client Conneced?
+          if(client.isConnected())
           {
+            // Yes: Send Message to server
             client.handleMessageFromClientUI(message);
           }
           else
           {
+            // No: Diplay Error Msg
             System.out.println("You must login to send msg");
           }
         }
       }
-      System.out.println("Exiting Program");
-      
-
+      System.out.println("Exiting Program");      
       
     } 
     catch (Exception ex) 
     {
-      System.out.println
-        ("Unexpected error while reading from console!");
+      System.out.println("Unexpected error while reading from console!");
     }
   }
 
@@ -152,43 +200,32 @@ public class ClientConsole implements ChatIF
    */
   public static void main(String[] args) 
   {
-    String host = "";
-    int port = 0;  //The port number
+    String _host = "";
+    int _port = 0;  //The port number
 
     try
     {
-      host = args[0];
+      _host = args[0];
     }
     catch(ArrayIndexOutOfBoundsException e)
     {
-      host = "localhost";
+      _host = "localhost";
     }
-    ClientConsole chat = new ClientConsole(host, DEFAULT_PORT);
 
     try
     {
-
-      BufferedReader fromConsole = new BufferedReader(new InputStreamReader(System.in));
-      String message;
-
-      Boolean running = true;
-      while (running) 
-      {
-
-        message = fromConsole.readLine();
-      
-      }
+      _port = Integer.parseInt(args[1]);
     }
-    catch (Exception ex) 
+    catch(ArrayIndexOutOfBoundsException e)
     {
-      System.out.println
-        ("Unexpected error while reading from console!");
+      _port = DEFAULT_PORT;
     }
 
+    // Crear
+    ClientConsole chat = new ClientConsole(_host, _port);
 
-    //Scanner sc = new Scanner(System.in);
-
-    //chat.accept();  //Wait for console data
+    chat.start();  // Start for console & Wait for data
+    
   }
 }
 //End of ConsoleChat class
