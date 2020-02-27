@@ -3,6 +3,8 @@
 // license found at www.lloseng.com 
 
 import java.io.*;
+import java.util.Scanner;
+
 import client.*;
 import common.*;
 
@@ -69,45 +71,123 @@ public class ClientConsole implements ChatIF
    * received, it sends it to the client's message handler.
    */
 
-  public Boolean logon()
+  public void logon()
   {
-    Boolean success = false;
-
     try 
     {
       this.client.connect();
-      success = true;
+      System.out.println("Successfully Logged on to:" + this.host + ":" + this.port);
     } 
     catch(IOException exception) 
     {
       System.out.println("Error: Can't setup connection!");
     }
 
-    return success;
   }
 
   public void logoff()
   {
-    System.out.println("Command Recived: Log Off");
     try 
     {
       this.client.disconnect();
+      System.out.println("Successfully Logged off from " + this.host + ":" + this.port);
     } 
     catch(IOException exception) 
     {
       System.out.println("Error: Can't close connection!");
-      
+
       System.exit(0);
     }
 
     return;
   }
 
+  public void help()
+  {
+    System.out.println("\n-----------------------------------------------------------------------------------------------");
+    System.out.println("#logon   -> Opens a connection to specified host and port");
+    System.out.println("#logoff  -> Closes any active connection");
+    System.out.println("#sethost -> Sets host name of the server to be connected to (cannont set while connection active)");
+    System.out.println("#gethost -> Displays host name of the server to be connected to (cannont set while connection active)");
+    System.out.println("#setport -> Sets port number to be used for the connection (cannont set while connection active)");
+    System.out.println("#setport -> Displays port number to be used for the connection (cannont set while connection active)");
+    System.out.println("#help    -> Displays this msg");
+    System.out.println("#quit    -> Closes all connections and Exits the program");
+    System.out.println("-----------------------------------------------------------------------------------------------");
+    return;
+  }
 
   public void stop()
   {
-    System.out.println("Command Recived: Quit");
-    client.quit();
+    //System.out.println("Command Recived: Quit");
+
+    try 
+    {
+      this.client.disconnect();
+      System.out.println("Exiting Program");
+    } 
+    catch(IOException exception) 
+    {
+      System.out.println("Error: Can't close connection!");
+
+      System.exit(0);
+    }
+    //client.quit();
+
+    return;
+  }
+
+  public void setPort(int _port)
+  {
+    
+
+    if(!client.isConnected())
+    {
+      System.out.println("Setting Port to: " + _port);
+      client.setPort(_port);
+    }
+    else
+    {
+      System.out.println("Error. Please Logoff to set port");
+    }
+    
+    
+
+    return;
+  }
+
+  public void getPort()
+  {
+    
+    System.out.println("Port is set to: " + client.getPort());
+    
+    return;
+  }
+
+
+
+  public void setHost(String _host)
+  {
+
+    if(!client.isConnected())
+    {
+      System.out.println("Setting host to: " + _host);
+      client.setHost(_host);
+    }
+    else
+    {
+      System.out.println("Error. Please Logoff to set host");
+    }
+    
+
+    return;
+  }
+
+
+  public void getHost()
+  {
+    
+    System.out.println("Host is set to: " + client.getHost());
 
     return;
   }
@@ -115,6 +195,8 @@ public class ClientConsole implements ChatIF
 
   public void start() 
   {
+    System.out.println("Enter msg to send or #help for a list of commands");
+
     try
     {
       BufferedReader fromConsole = new BufferedReader(new InputStreamReader(System.in));
@@ -128,25 +210,41 @@ public class ClientConsole implements ChatIF
         //
         message = fromConsole.readLine();
 
+
+        Scanner sc = new Scanner(message);
+
+        String command = sc.next();
+
+        
+        //int index = message.indexOf('#');
         // Check for command character
-        int index = message.indexOf('#');
-
-        // Is Msg command?
-        if (index > -1) {
-
-          // Yes: Remove '#'
-          String command = message.substring(index + 1, message.length());
-
+        if (command.indexOf('#') > -1) 
+        {
           // Which Command?
           switch (command.toLowerCase()) 
           {
-            case "logon":
+            case "#logon":
               this.logon();
               break;
-            case "logoff":
+            case "#logoff":
               this.logoff();
               break;
-            case "quit":
+            case "#setport":
+              this.setPort(sc.nextInt());
+              break;
+            case "#getport":
+              this.getPort();
+              break;
+            case "#sethost":
+              this.setHost(sc.next());
+              break;
+            case "#gethost":
+              this.getHost();
+              break;
+            case "#help":
+              this.help();
+              break;
+            case "#quit":
               this.stop();  
               running = false;
               break;
@@ -166,11 +264,67 @@ public class ClientConsole implements ChatIF
           else
           {
             // No: Diplay Error Msg
+            System.out.println("Error. You must login to send msg");
+          }
+        }
+
+
+        //int newPort = sc.nextInt();
+        
+        //System.out.println("Command Recived: Setport = " + newPort);
+        //client.setPort(newPort);
+
+        
+        /*
+        
+        // Check for command character
+        int index = message.indexOf('#');
+        
+        // Is Msg command?
+        if (index > -1) {
+          
+          // Yes: Remove '#'
+          String command = message.substring(index + 1, message.length());
+
+          // Which Command?
+          switch (command.toLowerCase()) 
+          {
+            case "logon":
+            this.logon();
+            break;
+            case "logoff":
+            this.logoff();
+            break;
+            case "setport":
+            this.setport(command);
+            break;
+            case "quit":
+            this.stop();  
+            running = false;
+            break;
+            default:
+              System.out.println("Invalid Command: " + command);
+              break;
+            }
+          }
+        else
+        {
+          // No: Is client Conneced?
+          if(client.isConnected())
+          {
+            // Yes: Send Message to server
+            client.handleMessageFromClientUI(message);
+          }
+          else
+          {
+            // No: Diplay Error Msg
             System.out.println("You must login to send msg");
           }
         }
+        //*/
+        sc.close();
       }
-      System.out.println("Exiting Program");      
+      //System.out.println("Exiting Program");      
       
     } 
     catch (Exception ex) 
