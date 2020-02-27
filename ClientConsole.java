@@ -6,6 +6,8 @@ import java.io.*;
 import client.*;
 import common.*;
 
+//import java.util.Scanner; 
+
 /**
  * This class constructs the UI for a chat client.  It implements the
  * chat interface in order to activate the display() method.
@@ -45,7 +47,8 @@ public class ClientConsole implements ChatIF
   {
     try 
     {
-      client= new ChatClient(host, port, this);
+
+      client = new ChatClient(host, port, this);
     } 
     catch(IOException exception) 
     {
@@ -55,6 +58,11 @@ public class ClientConsole implements ChatIF
     }
   }
 
+  public void connect()
+  {
+
+  }
+
   
   //Instance methods ************************************************
   
@@ -62,19 +70,59 @@ public class ClientConsole implements ChatIF
    * This method waits for input from the console.  Once it is 
    * received, it sends it to the client's message handler.
    */
+
+
   public void accept() 
   {
     try
     {
-      BufferedReader fromConsole = 
-        new BufferedReader(new InputStreamReader(System.in));
+      BufferedReader fromConsole = new BufferedReader(new InputStreamReader(System.in));
       String message;
 
-      while (true) 
+      Boolean running = true;
+      Boolean loggedIn = false;
+
+      while (running) 
       {
         message = fromConsole.readLine();
-        client.handleMessageFromClientUI(message);
+
+        int index = message.indexOf('#');
+        if (index == 0) {
+          String command = message.substring(index + 1, message.length());
+          switch (command.toLowerCase()) 
+          {
+            case "#logon":
+              loggedIn = true;
+              break;
+            case "#logoff":
+              loggedIn = false;
+              break;
+            case "quit":
+              client.quit();
+              loggedIn = false;
+              running = false;
+              break;
+            default:
+              System.out.println("Invalid Command: " + command);
+              break;
+          }
+        }
+        else
+        {
+          if(loggedIn)
+          {
+            client.handleMessageFromClientUI(message);
+          }
+          else
+          {
+            System.out.println("You must login to send msg");
+          }
+        }
       }
+      System.out.println("Exiting Program");
+      
+
+      
     } 
     catch (Exception ex) 
     {
@@ -115,8 +163,32 @@ public class ClientConsole implements ChatIF
     {
       host = "localhost";
     }
-    ClientConsole chat= new ClientConsole(host, DEFAULT_PORT);
-    chat.accept();  //Wait for console data
+    ClientConsole chat = new ClientConsole(host, DEFAULT_PORT);
+
+    try
+    {
+
+      BufferedReader fromConsole = new BufferedReader(new InputStreamReader(System.in));
+      String message;
+
+      Boolean running = true;
+      while (running) 
+      {
+
+        message = fromConsole.readLine();
+      
+      }
+    }
+    catch (Exception ex) 
+    {
+      System.out.println
+        ("Unexpected error while reading from console!");
+    }
+
+
+    //Scanner sc = new Scanner(System.in);
+
+    //chat.accept();  //Wait for console data
   }
 }
 //End of ConsoleChat class

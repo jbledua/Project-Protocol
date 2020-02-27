@@ -74,7 +74,7 @@ public class EchoServer extends AbstractServer
   
   //Class methods ***************************************************
   
-  /**
+  /*
    * This method is responsible for the creation of 
    * the server instance (there is no UI in this phase).
    *
